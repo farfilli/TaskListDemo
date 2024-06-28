@@ -15,13 +15,31 @@
             tmpTC.Initialize()
             tmpTC.VerticalBorders(VerticalBorders)
 
-            'AddHandler tmpTC.UserClick, AddressOf Me.tmpTC_Click
+            AddHandler tmpTC.LB_Image.MouseMove, AddressOf TC_MouseMove
+            AddHandler tmpTC.LB_Image.QueryContinueDrag, AddressOf TC_QueryContinueDrag
 
             FLP.Controls.Add(tmpTC)
             SetupAnchors()
 
         Next
 
+    End Sub
+
+    Private Sub TC_MouseMove(sender As Object, e As MouseEventArgs)
+        If e.Button = MouseButtons.Left Then
+            Dim tmpTC As Label = DirectCast(sender, Label)
+            Dim tmpTask As TaskControl = tmpTC.Parent.Parent
+            tmpTask.TLP.BackColor = Color.Orange
+            tmpTC.DoDragDrop(tmpTC, DragDropEffects.Move)
+        End If
+    End Sub
+
+    Private Sub TC_QueryContinueDrag(sender As Object, e As QueryContinueDragEventArgs)
+        If e.Action = DragAction.Drop OrElse e.Action = DragAction.Cancel Then
+            Dim tmpTC As Label = DirectCast(sender, Label)
+            Dim tmpTask As TaskControl = tmpTC.Parent.Parent
+            tmpTask.TLP.BackColor = Color.White
+        End If
     End Sub
 
     Private Sub SetupAnchors()
@@ -88,6 +106,25 @@
             End If
         Next
 
+    End Sub
+
+    Private Sub FLP_DragEnter(sender As Object, e As DragEventArgs) Handles FLP.DragEnter
+        e.Effect = If(e.Data.GetDataPresent(GetType(Label)), DragDropEffects.All, DragDropEffects.None)
+    End Sub
+
+    Private Sub FLP_DragOver(sender As Object, e As DragEventArgs) Handles FLP.DragOver
+        Dim pt As Point = FLP.PointToClient(New Point(e.X, e.Y))
+        Dim overTC As TaskControl = FLP.GetChildAtPoint(pt)
+
+        If Not IsNothing(overTC) Then
+            Dim TC As Label = DirectCast(e.Data.GetData(GetType(Label)), Label)
+            If Not TC Is overTC.LB_Image Then
+                Dim newIndex As Integer = FLP.Controls.IndexOf(overTC)
+                If newIndex <> FLP.Controls.IndexOf(TC) Then
+                    FLP.Controls.SetChildIndex(TC.Parent.Parent, newIndex)
+                End If
+            End If
+        End If
     End Sub
 
 End Class
